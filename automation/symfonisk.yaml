@@ -1,0 +1,235 @@
+blueprint:
+  name: ZHA - IKEA Symfonisk sound remote GEN2
+  description: Media control and shortcut button support for the IKEA Symfonisk sound remote GEN2. D edition
+  domain: automation
+  source_url: https://github.com/danielholm/ha-blueprints/automation/symfonisk.yaml
+  input:
+    remote:
+      name: Remote
+      description: IKEA Symfonisk controller GEN2 to use
+      selector:
+        device:
+          integration: zha
+          manufacturer: IKEA of Sweden
+          model: SYMFONISK sound remote gen2
+          multiple: false
+    media_player:
+      name: Media Player
+      description: The media player to control with this automation
+      selector:
+        entity:
+          domain: media_player
+          multiple: false
+    volume_up:
+      name: Volume Up Button
+      description: Button to control volume up
+      selector:
+        entity:
+          domain: input_button
+          multiple: false
+    volume_up_hold:
+      name: Volume Up hold Button
+      description: Button to control long press volume up
+      selector:
+        entity:
+          domain: input_button
+          multiple: false
+    volume_down:
+      name: Volume Down Button
+      description: Button to control volume down
+      selector:
+        entity:
+          domain: input_button
+          multiple: false
+    volume_down_hold:
+      name: Volume Down Button hold
+      description: Button to control long press volume down
+      selector:
+        entity:
+          domain: input_button
+          multiple: false
+    play_pause_long_press:
+      name: Play/Pause Long Press
+      description: Action to run on play/pause long press
+      selector:
+        action: {}
+    single_dot_single_press:
+      name: Single dot (Single press)
+      description: Action to run on single dot press
+      default: []
+      selector:
+        action: {}
+    single_dot_double_press:
+      name: Single dot (Double press)
+      description: Action to run on single dot double press
+      default: []
+      selector:
+        action: {}
+    single_dot_long_press:
+      name: Single dot (Long press)
+      description: Action to run on single dot long press
+      default: []
+      selector:
+        action: {}
+    double_dot_single_press:
+      name: Double dot (Single press)
+      description: Action to run on double dot press
+      default: []
+      selector:
+        action: {}
+    double_dot_double_press:
+      name: Double dot (Double press)
+      description: Action to run on double dot double press
+      default: []
+      selector:
+        action: {}
+    double_dot_long_press:
+      name: Double dot (Long press)
+      description: Action to run on double dot long press
+      default: []
+      selector:
+        action: {}
+mode: single
+max_exceeded: silent
+trigger:
+  - platform: event
+    event_type: zha_event
+    event_data:
+      device_id: !input remote
+action:
+  - variables:
+      command: "{{ trigger.event.data.command }}"
+      cluster_id: "{{ trigger.event.data.cluster_id }}"
+      endpoint_id: "{{ trigger.event.data.endpoint_id }}"
+      args: "{{ trigger.event.data.args }}"
+      player: !input media_player
+  - choose:
+      #Play Pause
+      - conditions:
+          - "{{ command == 'toggle' }}"
+          - "{{ cluster_id == 6 }}"
+          - "{{ endpoint_id == 1 }}"
+        sequence:
+          - service: media_player.media_play_pause
+            target:
+              entity_id: "{{ player }}"
+      #Volume Up Press
+      - conditions:
+          - "{{ command == 'move_with_on_off' }}"
+          - "{{ cluster_id == 8 }}"
+          - "{{ endpoint_id == 1 }}"
+          - "{{ trigger.event.data.params.move_mode == 0}}"
+        sequence:
+          - service: input_button.press
+            target:
+              entity_id: !input volume_up
+      #Volume Up Hold
+      - conditions:
+          - "{{ command == 'move' }}"
+          - "{{ cluster_id == 8 }}"
+          - "{{ endpoint_id == 1 }}"
+          - "{{ trigger.event.data.params.move_mode == 0}}"
+        sequence:
+          - service: input_button.press
+            target:
+              entity_id: !input volume_up_hold
+      #Volume Down Press
+      - conditions:
+          - "{{ command == 'move_with_on_off' }}"
+          - "{{ cluster_id == 8 }}"
+          - "{{ endpoint_id == 1 }}"
+          - "{{ trigger.event.data.params.move_mode == 1}}"
+        sequence:
+          - service: input_button.press
+            target:
+              entity_id: !input volume_down
+      #Volume Down Hold
+      - conditions:
+          - "{{ command == 'move' }}"
+          - "{{ cluster_id == 8 }}"
+          - "{{ endpoint_id == 1 }}"
+          - "{{ trigger.event.data.params.move_mode == 1 }}"
+        sequence:
+          - service: input_button.press
+            target:
+              entity_id: !input volume_down_hold
+      #Next Track
+      - conditions:
+          - "{{ command == 'step' }}"
+          - "{{ cluster_id == 8 }}"
+          - "{{ endpoint_id == 1 }}"
+          - "{{ trigger.event.data.params.step_mode == 0 }}"
+        sequence:
+          ##- service: media_player.media_next_track
+            ##target:
+              ##entity_id: "{{ player }}"
+          - service: media_player.media_play_pause
+            data: {}
+            target:
+              entity_id: "{{ player }}"
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 0
+              milliseconds: 500
+          - service: media_player.media_seek
+            data:
+              seek_position: >-
+                {{ state_attr(player, "media_position")|int + int(30) }}
+            target:
+              entity_id: "{{ player }}"
+      #Last Track
+      - conditions:
+          - "{{ command == 'step' }}"
+          - "{{ cluster_id == 8 }}"
+          - "{{ endpoint_id == 1 }}"
+          - "{{ trigger.event.data.params.step_mode == 1 }}"
+        sequence:
+          ##- service: media_player.media_previous_track
+            ##target:
+              ##entity_id: "{{ player }}"
+          - service: media_player.media_play_pause
+            data: {}
+            target:
+              entity_id: "{{ player }}"
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 0
+              milliseconds: 500
+          - service: media_player.media_seek
+            data:
+              seek_position: >-
+                {{ state_attr(player, "media_position")|int + int(-30) }}
+            target:
+              entity_id: "{{ player }}"
+      #Single Dot Press
+      - conditions:
+          - "{{ command == 'short_release' }}"
+          - "{{ endpoint_id == 2 }}"
+        sequence: !input single_dot_single_press
+      #Single Dot Double Press
+      - conditions:
+          - "{{ command == 'multi_press_complete' }}"
+          - "{{ endpoint_id == 2 }}"
+        sequence: !input single_dot_double_press
+      #Single Dot Long Press
+      - conditions:
+          - "{{ command == 'long_press' }}"
+          - "{{ endpoint_id == 2 }}"
+        sequence: !input single_dot_long_press
+      #Double Dot Press
+      - conditions:
+          - "{{ command == 'short_release' }}"
+          - "{{ endpoint_id == 3 }}"
+        sequence: !input double_dot_single_press
+      #Double Dot Double Press
+      - conditions:
+          - "{{ command == 'multi_press_complete' }}"
+          - "{{ endpoint_id == 3 }}"
+        sequence: !input double_dot_double_press
+      #Double Dot Long Press
+      - conditions:
+          - "{{ command == 'long_press' }}"
+          - "{{ endpoint_id == 3 }}"
+        sequence: !input double_dot_long_press

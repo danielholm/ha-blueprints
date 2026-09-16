@@ -1,0 +1,277 @@
+blueprint:
+  name: Röst - Boka in händelse i kalendern - Fullt LLM-skript
+  author: Daniel
+  source_url: https://github.com/danielholm/ha-blueprints/script/voice_assist_calendar_full_llm_sv.yaml
+  description:
+    "# Schemalägg en händelse framåt i tiden med hjälp av en LLM
+
+    En instans per kalender. Skapa ett skript för varje kalender du vill kunna
+    boka i och ge dem tydligt åtskilda beskrivningar, så väljer modellen rätt
+    verktyg själv.
+
+    ### Uppsättning
+
+    #### Obligatoriskt
+
+    * Välj kalendern som händelserna skrivs till
+
+    #### Valfritt
+
+    * Sätt en standardlängd som används när ingen längd anges
+
+    * Justera prompterna. Beskrivningarna är det enda modellen ser.
+
+    #### Observera:
+
+    * Ge varje skript en beskrivning som tydligt skiljer det från de andra.
+    Det är den som avgör vilket verktyg modellen väljer.
+
+    * **Kom ihåg att exponera skriptet till Assist efter att du sparat det**
+
+    #### Exempel på skriptbeskrivningar:
+
+    `Schedules a work meeting or work-related appointment. Use this for
+    meetings, standups, interviews and anything related to the user's job.`
+
+    `Schedules a private appointment for the user themselves. Use this for
+    doctor and dentist appointments, haircuts, training and personal errands.`
+
+    `Schedules a family event that concerns the whole household. Use this for
+    school events, birthdays, trips and things involving the children.`
+
+    ### Användning
+
+    ```
+
+    Lägg in ett möte med Anna på torsdag klockan tio
+
+    Boka läkartid imorgon kvart över nio
+
+    Utvecklingssamtal på fredag klockan fjorton
+
+    ```"
+  domain: script
+  homeassistant:
+    min_version: 2024.10.0
+  input:
+    calendar_settings:
+      name: Kalender
+      icon: mdi:calendar
+      input:
+        calendar_entity:
+          name: Kalenderentitet
+          description: Kalendern som händelserna skrivs till
+          selector:
+            entity:
+              filter:
+                domain: calendar
+        default_duration:
+          name: Standardlängd
+          description:
+            Används när modellen inte fyller i någon längd. Gör att du kan säga
+            bara 'möte med Anna på torsdag klockan tio'.
+          selector:
+            number:
+              min: 10
+              max: 480
+              unit_of_measurement: min
+          default: 60
+        max_days_ahead:
+          name: Längst fram i tiden
+          description:
+            Bokningar längre fram än så här avvisas. Fångar framför allt
+            modeller som skriver fel årtal.
+          selector:
+            number:
+              min: 1
+              max: 730
+              unit_of_measurement: dagar
+          default: 180
+        roll_forward:
+          name: Flytta till imorgon om tiden passerat
+          description:
+            Gäller bara när inget datum angetts. Säger du 'klockan sju' klockan
+            nio på kvällen menar du sannolikt imorgon.
+          selector:
+            boolean:
+          default: true
+        allow_past:
+          name: Tillåt bokningar bakåt i tiden
+          description:
+            Av som standard. Slå på om du även vill kunna föra in händelser i
+            efterhand.
+          selector:
+            boolean:
+          default: false
+    prompt_settings:
+      name: Promptinställningar för LLM:en
+      icon: mdi:robot
+      description:
+        Beskrivningarna nedan är det verktygsschema modellen läser. Standard är
+        engelska, eftersom mindre modeller följer instruktioner bättre på
+        engelska även när kommandot sägs på svenska.
+      collapsed: true
+      input:
+        title_prompt:
+          name: Prompt för rubrik
+          selector:
+            text:
+              multiline: true
+          default:
+            "Mandatory. A short title for the event, in Swedish, as the user
+            would write it in a calendar.
+
+            Keep the user's own wording where possible: 'möte med Anna',
+            'läkartid', 'tandläkare', 'löpning'.
+
+            Do not add the time or the date to the title."
+        time_prompt:
+          name: Prompt för klockslag
+          selector:
+            text:
+              multiline: true
+          default:
+            "This argument is mandatory and must always be provided.
+
+            The time the event starts, in format HH:MM:SS, 24 hour clock.
+
+            'sju' or 'sju på morgonen' is 07:00:00, 'sju i kväll' is 19:00:00,
+            'halv nio' is 08:30:00, 'kvart över nio' is 09:15:00, 'bitti' means
+            early morning, use 07:00:00.
+
+            If the user gave no time at all, ask them for one instead of
+            guessing."
+        date_prompt:
+          name: Prompt för datum
+          selector:
+            text:
+              multiline: true
+          default:
+            "Optional. The date the event starts, in format YYYY-MM-DD.
+
+            Provide this whenever the user names a day, for example 'imorgon',
+            'på torsdag', 'nästa måndag' or an explicit date.
+
+            Omit this field entirely if the user means today.
+
+            Always use the current year unless the user explicitly states
+            another one. Never write a date in the past."
+        duration_prompt:
+          name: Prompt för längd
+          selector:
+            text:
+              multiline: true
+          default:
+            "Optional. Duration of the event in whole minutes as an integer.
+
+            'en timme' is 60, 'en halvtimme' is 30, 'en och en halv timme' is 90.
+
+            Omit this field entirely if the user did not state a duration."
+
+mode: parallel
+max_exceeded: silent
+
+fields:
+  rubrik:
+    name: Rubrik
+    description: !input title_prompt
+    selector:
+      text:
+    required: true
+  start_tid:
+    name: Starttid
+    description: !input time_prompt
+    selector:
+      time:
+    required: true
+  start_datum:
+    name: Startdatum
+    description: !input date_prompt
+    selector:
+      date:
+  langd_minuter:
+    name: Längd
+    description: !input duration_prompt
+    selector:
+      number:
+        min: 5
+        max: 480
+        unit_of_measurement: min
+
+sequence:
+  - alias: Normalisera indata
+    variables:
+      version: 20260907
+      default_duration: !input default_duration
+      max_days_ahead: !input max_days_ahead
+      roll_forward: !input roll_forward
+      allow_past: !input allow_past
+      langd: >-
+        {{ langd_minuter | int(0) if langd_minuter is defined
+           and langd_minuter not in [none, '', 'None']
+           else default_duration | int(60) }}
+      har_datum: "{{ start_datum is defined and start_datum not in [none, '', 'None'] }}"
+      datum: "{{ start_datum if har_datum else now().date() | string }}"
+
+  - alias: Räkna ut starttidpunkt
+    variables:
+      start_ts: >-
+        {% set s = (datum ~ ' ' ~ start_tid) | as_datetime %}
+        {%- if s is none -%}
+          0
+        {%- elif roll_forward and not har_datum
+                and (s | as_timestamp) < (now() | as_timestamp) -%}
+          {{ (s + timedelta(days = 1)) | as_timestamp }}
+        {%- else -%}
+          {{ s | as_timestamp }}
+        {%- endif -%}
+
+  - alias: Kontrollera att variablerna sattes korrekt
+    if:
+      - condition: template
+        value_template: >-
+          {% set ts = start_ts | float(0) %}
+          {% set nu = now() | as_timestamp %}
+          {{ ts <= 0
+             or langd < 5
+             or (not allow_past and ts < nu - 300)
+             or ts > nu + (max_days_ahead | int(180)) * 86400 }}
+    then:
+      - alias: Sätt variabel för felmeddelande
+        variables:
+          response:
+            error: >-
+              Could not schedule the event. The date or time could not be
+              parsed, or it falls in the past, or it is unreasonably far in the
+              future. Check that the year is correct, then ask the user to
+              restate the day and time.
+      - alias: Avbryt skriptet
+        stop: Ogiltiga indata från AI-agenten
+        response_variable: response
+
+  - alias: Formatera som lokal tid
+    variables:
+      start: "{{ start_ts | float | timestamp_custom('%Y-%m-%d %H:%M:%S') }}"
+      slut: >-
+        {{ (start_ts | float + langd * 60) | timestamp_custom('%Y-%m-%d %H:%M:%S') }}
+
+  - alias: Skapa händelsen
+    action: calendar.create_event
+    target:
+      entity_id: !input calendar_entity
+    data:
+      summary: "{{ rubrik }}"
+      start_date_time: "{{ start }}"
+      end_date_time: "{{ slut }}"
+
+  - alias: Svara tillbaka till modellen
+    variables:
+      result:
+        status: scheduled
+        title: "{{ rubrik }}"
+        minutes: "{{ langd }}"
+        date: "{{ start_ts | float | timestamp_custom('%Y-%m-%d') }}"
+        starts: "{{ start_ts | float | timestamp_custom('%H:%M') }}"
+        ends: "{{ (start_ts | float + langd * 60) | timestamp_custom('%H:%M') }}"
+  - stop: ""
+    response_variable: result

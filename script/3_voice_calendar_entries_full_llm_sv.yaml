@@ -1,0 +1,245 @@
+blueprint:
+  name: Röst - Kalenderhändelser - Fullt LLM-skript
+  author: TheFes (Daniel Holm för svensk översättning)
+  source_url: https://github.com/danielholm/ha-blueprints/script/3_voice_calendar_entries_full_llm_sv.yaml
+  description:
+    "![Image](https://github.com/TheFes/ha-blueprints/blob/main/images/header.png?raw=true)
+
+    # Hämta kalenderhändelser med hjälp av en LLM
+
+    ### Uppsättning av blueprinten
+
+    #### Obligatoriskt
+
+    * Välj en eller flera kalenderentiteter som du vill hämta händelser från
+
+    #### Valfritt
+
+    * Justera prompterna för varje fält i skriptet. Beskrivningarna styr
+    vad LLM:en matar in i respektive fält
+
+    #### Observera:
+
+    * Ge skriptet en tydlig beskrivning. Den används av LLM:en för att avgöra
+    att just det här skriptet ska anropas för kalenderhändelser.
+
+    * **Kom ihåg att exponera skriptet till Assist efter att du sparat det**
+
+    #### Exempel på skriptbeskrivning:
+
+    `Hämtar händelser från min kalender. Om data efterfrågas för helgen
+    avses lördag och söndag`
+
+    ### Användning
+
+    Du kan fråga efter kalenderhändelser hur du vill, på vilket språk du vill.
+    Om inget annat ställts in i LLM-konfigurationen kommer svaret på samma
+    språk som frågan.
+
+    Du kan syfta på en enskild dag, flera dagar (t.ex. nästa helg), en del av
+    dygnet (t.ex. imorgon förmiddag) eller en eller flera timmar (t.ex. från
+    17 till 21).
+
+    Du kan till och med fråga efter specifika händelser, till exempel om det
+    finns någon läkartid inbokad de kommande två veckorna.
+
+
+    #### Exempel
+
+    ```
+
+    Vad står på kalendern imorgon?
+
+    Har jag något inbokat i kväll?
+
+    Är jag upptagen klockan nio i kväll?
+
+    Har jag någon läkartid nästa vecka?
+
+    ```"
+  domain: script
+  homeassistant:
+    min_version: 2024.10.0
+  input:
+    calendar_entities:
+      name: Kalenderentiteter
+      description: Välj de kalenderentiteter som händelser ska hämtas från
+      selector:
+        entity:
+          multiple: true
+          filter:
+            domain: calendar
+    prompt_settings:
+      name: Promptinställningar för LLM:en
+      icon: mdi:robot
+      description:
+        Med de här inställningarna kan du finjustera prompterna för just din
+        LLM (modell). I de flesta fall räcker standardvärdena.
+      collapsed: true
+      input:
+        time_period_type_prompt:
+          name: Prompt för typ av tidsperiod
+          description:
+            Prompten som används för att LLM:en ska kunna ange typen av
+            tidsperiod (dagar eller timmar)
+          selector:
+            text:
+              multiline: true
+              multiple: false
+          default:
+            "Det här argumentet är obligatoriskt och måste alltid anges, oavsett
+            vad!
+
+            Använd 'daily' när frågan gäller hela dagar, exempel: idag, nästa
+            torsdag, kommande helg. Använd 'hourly' när frågan gäller en del av
+            ett dygn, exempel: klockan 20 i kväll, imorgon förmiddag, i kväll,
+            från 15 till 17"
+        time_period_length_prompt:
+          name: Prompt för tidsperiodens längd
+          description:
+            Prompten som används för att LLM:en ska kunna ange tidsperiodens
+            längd
+          selector:
+            text:
+              multiline: true
+              multiple: false
+          default:
+            "Det här argumentet är obligatoriskt och måste alltid anges, oavsett
+            vad!
+
+            Tidsperiodens längd. Detta är antalet dagar när 'time_period_type'
+            är 'daily' och antalet timmar när 'time_period_type' är 'hourly'.
+            Exempel: 1 (dag) om frågan gäller idag, 2 (dagar) om frågan gäller
+            kalenderhändelser för helgen, 6 (timmar) om frågan gäller
+            kalenderhändelser för perioder som natt, morgon, eftermiddag och
+            kväll"
+        date_prompt:
+          name: Prompt för datum
+          description:
+            Prompten som används för att LLM:en ska kunna ange startdatum för
+            perioden
+          selector:
+            text:
+              multiline: true
+              multiple: false
+          default:
+            "Det här argumentet är obligatoriskt och måste alltid anges, oavsett
+            vad!
+
+            Ange datumet då den efterfrågade perioden börjar. Datumet ska vara i
+            formatet YYYY-MM-DD. Ange alltid ett datum, så om frågan gäller idag
+            anger du dagens datum.
+
+            När den efterfrågade perioden gäller natten ska du inte använda
+            dagens datum utan alltid nästa dag, om inte klockan fortfarande är
+            före 05:00:00"
+        time_prompt:
+          name: Prompt för klockslag
+          description:
+            Prompten som används för att LLM:en ska kunna ange starttid för
+            perioden
+          selector:
+            text:
+              multiline: true
+              multiple: false
+          default:
+            "Det här argumentet är obligatoriskt och måste alltid anges, oavsett
+            vad!
+
+            Ange klockslaget då den efterfrågade perioden börjar. Tiden ska vara
+            i formatet HH:MM:SS i 24-timmarsformat (till exempel 17:00:00). Ange
+            alltid ett klockslag. Om en hel dag efterfrågas använder du
+            00:00:00, om den aktuella timmen efterfrågas använder du timmens
+            början.
+
+            Natten börjar 00:00:00, morgonen börjar 06:00:00, eftermiddagen
+            börjar 12:00:00 och kvällen börjar 18:00:00"
+mode: parallel
+max_exceeded: silent
+fields:
+  time_period_type:
+    name: Typ av tidsperiod
+    description: !input time_period_type_prompt
+    selector:
+      select:
+        options:
+          - daily
+          - hourly
+    required: true
+  time_period_length:
+    name: Tidsperiodens längd
+    description: !input time_period_length_prompt
+    selector:
+      number:
+        min: 1
+        max: 48
+    required: true
+  start_date:
+    name: Startdatum
+    description: !input date_prompt
+    selector:
+      date:
+    required: true
+  start_time:
+    name: Starttid
+    description: !input time_prompt
+    selector:
+      time:
+    required: true
+sequence:
+  - variables:
+      version: 20250129
+      start_date: "{{ start_date | as_datetime(default='') }}"
+      start_time:
+        "{{ start_time | default('00:00:00') | as_timedelta | default('00:00:00',
+        true) }}"
+      start:
+        "{{ (start_date | as_datetime + as_timedelta(start_time)) | as_local if
+        start_date else 'NA' }}"
+      end: "{% if start != 'NA' %}
+
+        {% set start = as_datetime(start) %}
+
+        {% set add = time_period_length | default(1) | int(1) %}
+
+        {% set type = time_period_type | default if time_period_type | default in ['daily',
+        'hourly'] else 'daily' %}
+
+        {{ (start + timedelta(days = add if type == 'daily' else 0, hours = add if
+        type == 'hourly' else 0)).isoformat() }}
+
+        {% endif %}"
+  - alias: Kontrollera att variablerna sattes korrekt
+    if:
+      - condition: template
+        value_template: "{{ start == 'NA' or end | as_datetime < now() }}"
+    then:
+      - alias: Sätt variabel för felmeddelande
+        variables:
+          response:
+            error:
+              Kan inte hämta kalenderhändelser eftersom AI-agenten inte satte alla
+              parametrar
+      - alias: Avbryt skriptet
+        stop:
+          Kunde inte avgöra datum för kalenderhändelserna, eller så ligger datumet
+          i det förflutna
+        response_variable: response
+  - action: calendar.get_events
+    target:
+      entity_id: !input calendar_entities
+    response_variable: response
+    data:
+      start_date_time: "{{start }}"
+      end_date_time: "{{end }}"
+  - variables:
+      result:
+        events: >-
+          {{
+            response.values()
+              | map(attribute='events')
+              | sum(start=[])
+              | sort(attribute=start)
+          }}
+  - stop: ""
+    response_variable: result
