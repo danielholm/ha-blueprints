@@ -1,7 +1,7 @@
 blueprint:
   name: Röst - Kalenderhändelser - Fullt LLM-skript
   author: TheFes (Daniel Holm för svensk översättning)
-  source_url: https://github.com/danielholm/ha-blueprints/script/3_voice_calendar_entries_full_llm_sv.yaml
+  source_url: https://github.com/danielholm/ha-blueprints/blob/main/script/3_voice_calendar_entries_full_llm_sv.yaml
   description:
     "![Image](https://github.com/TheFes/ha-blueprints/blob/main/images/header.png?raw=true)
 

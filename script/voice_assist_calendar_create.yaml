@@ -1,7 +1,7 @@
 blueprint:
   name: Röst - Boka in händelse i kalendern - Fullt LLM-skript
   author: Daniel
-  source_url: https://github.com/danielholm/ha-blueprints/script/voice_assist_calendar_full_llm_sv.yaml
+  source_url: https://github.com/danielholm/ha-blueprints/blob/main/script/voice_assist_calendar_create.yaml
   description:
     "# Schemalägg en händelse framåt i tiden med hjälp av en LLM
 

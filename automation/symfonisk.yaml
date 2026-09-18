@@ -2,7 +2,7 @@ blueprint:
   name: ZHA - IKEA Symfonisk sound remote GEN2
   description: Media control and shortcut button support for the IKEA Symfonisk sound remote GEN2. D edition
   domain: automation
-  source_url: https://github.com/danielholm/ha-blueprints/automation/symfonisk.yaml
+  source_url: https://github.com/danielholm/ha-blueprints/blob/main/automation/symfonisk.yaml
   input:
     remote:
       name: Remote
