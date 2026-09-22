@@ -1,0 +1,451 @@
+blueprint:
+  name: Smart våningsbelysning v2.6 (upp till 5 zoner)
+  description: >
+    Styr belysningen per våning med upp till 5 zoner. Varje zon har egna rörelsesensorer,
+    lampor, natt-scen och Adaptive Lighting-stöd. Ljuset tänds vid rörelse och släcks mjukt
+    när rörelsen upphör. När hela våningen varit inaktiv en stund körs en scen eller all
+    belysning släcks.
+  source_url: https://github.com/danielholm/ha-blueprints/blob/main/script/floor-occupancy-light.yaml
+  domain: automation
+  input:
+    floor_name:
+      name: Våningens namn
+      selector:
+        text:
+
+    # --- Zon 1 ---
+    zone1_motion:
+      name: Rörelsesensor(er) zon 1
+      default: []
+      selector:
+        entity:
+          multiple: true
+          domain: binary_sensor
+    zone1_lights:
+      name: Lampor zon 1
+      default: []
+      selector:
+        entity:
+          multiple: true
+          domain: light
+    zone1_scene:
+      name: Natt-scen zon 1 (valfritt)
+      default: []
+      selector:
+        entity:
+          domain: scene
+    zone1_adaptive:
+      name: Adaptive Lighting-switch zon 1 (valfritt)
+      default: []
+      selector:
+        entity:
+          domain: switch
+    zone1_delay:
+      name: Fördröjning för zon 1 (sek)
+      default: 180
+      selector:
+        number:
+          min: 10
+          max: 3600
+          unit_of_measurement: sekunder
+    zone1_fade:
+      name: Fade-tid zon 1 (sek)
+      default: 5
+      selector:
+        number:
+          min: 1
+          max: 30
+          unit_of_measurement: sekunder
+
+    # --- Zon 2 ---
+    zone2_motion:
+      name: Rörelsesensor(er) zon 2
+      default: []
+      selector:
+        entity:
+          multiple: true
+          domain: binary_sensor
+    zone2_lights:
+      name: Lampor zon 2
+      default: []
+      selector:
+        entity:
+          multiple: true
+          domain: light
+    zone2_scene:
+      name: Natt-scen zon 2 (valfritt)
+      default: []
+      selector:
+        entity:
+          domain: scene
+    zone2_adaptive:
+      name: Adaptive Lighting-switch zon 2 (valfritt)
+      default: []
+      selector:
+        entity:
+          domain: switch
+    zone2_delay:
+      name: Fördröjning för zon 2 (sek)
+      default: 180
+      selector:
+        number:
+          min: 10
+          max: 3600
+          unit_of_measurement: sekunder
+    zone2_fade:
+      name: Fade-tid zon 2 (sek)
+      default: 5
+      selector:
+        number:
+          min: 1
+          max: 30
+          unit_of_measurement: sekunder
+
+    # --- Zon 3 ---
+    zone3_motion:
+      name: Rörelsesensor(er) zon 3
+      default: []
+      selector:
+        entity:
+          multiple: true
+          domain: binary_sensor
+    zone3_lights:
+      name: Lampor zon 3
+      default: []
+      selector:
+        entity:
+          multiple: true
+          domain: light
+    zone3_scene:
+      name: Natt-scen zon 3 (valfritt)
+      default: []
+      selector:
+        entity:
+          domain: scene
+    zone3_adaptive:
+      name: Adaptive Lighting-switch zon 3 (valfritt)
+      default: []
+      selector:
+        entity:
+          domain: switch
+    zone3_delay:
+      name: Fördröjning för zon 3 (sek)
+      default: 180
+      selector:
+        number:
+          min: 10
+          max: 3600
+          unit_of_measurement: sekunder
+    zone3_fade:
+      name: Fade-tid zon 3 (sek)
+      default: 5
+      selector:
+        number:
+          min: 1
+          max: 30
+          unit_of_measurement: sekunder
+
+    # --- Zon 4 ---
+    zone4_motion:
+      name: Rörelsesensor(er) zon 4
+      default: []
+      selector:
+        entity:
+          multiple: true
+          domain: binary_sensor
+    zone4_lights:
+      name: Lampor zon 4
+      default: []
+      selector:
+        entity:
+          multiple: true
+          domain: light
+    zone4_scene:
+      name: Natt-scen zon 4 (valfritt)
+      default: []
+      selector:
+        entity:
+          domain: scene
+    zone4_adaptive:
+      name: Adaptive Lighting-switch zon 4 (valfritt)
+      default: []
+      selector:
+        entity:
+          domain: switch
+    zone4_delay:
+      name: Fördröjning för zon 4 (sek)
+      default: 180
+      selector:
+        number:
+          min: 10
+          max: 3600
+          unit_of_measurement: sekunder
+    zone4_fade:
+      name: Fade-tid zon 4 (sek)
+      default: 5
+      selector:
+        number:
+          min: 1
+          max: 30
+          unit_of_measurement: sekunder
+
+    # --- Zon 5 ---
+    zone5_motion:
+      name: Rörelsesensor(er) zon 5
+      default: []
+      selector:
+        entity:
+          multiple: true
+          domain: binary_sensor
+    zone5_lights:
+      name: Lampor zon 5
+      default: []
+      selector:
+        entity:
+          multiple: true
+          domain: light
+    zone5_scene:
+      name: Natt-scen zon 5 (valfritt)
+      default: []
+      selector:
+        entity:
+          domain: scene
+    zone5_adaptive:
+      name: Adaptive Lighting-switch zon 5 (valfritt)
+      default: []
+      selector:
+        entity:
+          domain: switch
+    zone5_delay:
+      name: Fördröjning för zon 5 (sek)
+      default: 180
+      selector:
+        number:
+          min: 10
+          max: 3600
+          unit_of_measurement: sekunder
+    zone5_fade:
+      name: Fade-tid zon 5 (sek)
+      default: 5
+      selector:
+        number:
+          min: 1
+          max: 30
+          unit_of_measurement: sekunder
+
+    # --- Våningsnivå ---
+    floor_inactive_delay:
+      name: Fördröjning för våningssläckning (sek)
+      default: 600
+      selector:
+        number:
+          min: 60
+          max: 3600
+          unit_of_measurement: sekunder
+    floor_off_scene:
+      name: Scen vid våningssläckning (valfritt)
+      default: []
+      selector:
+        entity:
+          domain: scene
+
+mode: parallel
+max_exceeded: silent
+
+# Triggers – går bra att ha tomma inputs, HA ignorerar bara dem.
+trigger:
+  - platform: state
+    entity_id:
+      - !input zone1_motion
+      - !input zone2_motion
+      - !input zone3_motion
+      - !input zone4_motion
+      - !input zone5_motion
+    to: "on"
+    id: motion_on
+
+  - platform: state
+    entity_id:
+      - !input zone1_motion
+      - !input zone2_motion
+      - !input zone3_motion
+      - !input zone4_motion
+      - !input zone5_motion
+    to: "off"
+    for:
+      seconds: 5
+    id: motion_off
+
+action:
+  # Lyft ALLA !input till rena YAML-variabler först (ingen Jinja här)
+  - variables:
+      trig: "{{ trigger.id }}"
+
+      # Zon-variabler (rörelsesensorer)
+      zone1_m: !input zone1_motion
+      zone2_m: !input zone2_motion
+      zone3_m: !input zone3_motion
+      zone4_m: !input zone4_motion
+      zone5_m: !input zone5_motion
+
+      # Zon-variabler (ljus/scen/adaptive/tider)
+      zone1_l: !input zone1_lights
+      zone1_s: !input zone1_scene
+      zone1_a: !input zone1_adaptive
+      zone1_d: !input zone1_delay
+      zone1_f: !input zone1_fade
+
+      zone2_l: !input zone2_lights
+      zone2_s: !input zone2_scene
+      zone2_a: !input zone2_adaptive
+      zone2_d: !input zone2_delay
+      zone2_f: !input zone2_fade
+
+      zone3_l: !input zone3_lights
+      zone3_s: !input zone3_scene
+      zone3_a: !input zone3_adaptive
+      zone3_d: !input zone3_delay
+      zone3_f: !input zone3_fade
+
+      zone4_l: !input zone4_lights
+      zone4_s: !input zone4_scene
+      zone4_a: !input zone4_adaptive
+      zone4_d: !input zone4_delay
+      zone4_f: !input zone4_fade
+
+      zone5_l: !input zone5_lights
+      zone5_s: !input zone5_scene
+      zone5_a: !input zone5_adaptive
+      zone5_d: !input zone5_delay
+      zone5_f: !input zone5_fade
+
+      # Våningsvariabler
+      floor_off_scene_var: !input floor_off_scene
+      floor_delay: !input floor_inactive_delay
+
+  - choose:
+      # ------------------ RÖRELSE UPPTÄCKT ------------------
+      - conditions: "{{ trig == 'motion_on' }}"
+        sequence:
+          - repeat:
+              for_each:
+                - {m: "{{ zone1_m }}", l: "{{ zone1_l }}", s: "{{ zone1_s }}", a: "{{ zone1_a }}"}
+                - {m: "{{ zone2_m }}", l: "{{ zone2_l }}", s: "{{ zone2_s }}", a: "{{ zone2_a }}"}
+                - {m: "{{ zone3_m }}", l: "{{ zone3_l }}", s: "{{ zone3_s }}", a: "{{ zone3_a }}"}
+                - {m: "{{ zone4_m }}", l: "{{ zone4_l }}", s: "{{ zone4_s }}", a: "{{ zone4_a }}"}
+                - {m: "{{ zone5_m }}", l: "{{ zone5_l }}", s: "{{ zone5_s }}", a: "{{ zone5_a }}"}
+              sequence:
+                - variables:
+                    m: "{{ repeat.item.m }}"
+                    l: "{{ repeat.item.l }}"
+                    s: "{{ repeat.item.s }}"
+                    a: "{{ repeat.item.a }}"
+                    any_active_now: >
+                      {% set states_list = expand(m) | map(attribute='state') | list %}
+                      {{ 'on' in states_list }}
+                - if:
+                    - condition: template
+                      value_template: "{{ m != [] and any_active_now }}"
+                  then:
+                    - choose:
+                        # Dagtid: tänd lampor (+ ev. Adaptive)
+                        - conditions:
+                            - condition: sun
+                              after: sunrise
+                              before: sunset
+                          sequence:
+                            - service: light.turn_on
+                              target:
+                                entity_id: "{{ l }}"
+                            - if:
+                                - condition: template
+                                  value_template: "{{ a != [] }}"
+                              then:
+                                - service: switch.turn_on
+                                  target:
+                                    entity_id: "{{ a }}"
+                        # Natt: kör scen om angiven
+                        - conditions:
+                            - condition: or
+                              conditions:
+                                - condition: sun
+                                  before: sunrise
+                                - condition: sun
+                                  after: sunset
+                          sequence:
+                            - if:
+                                - condition: template
+                                  value_template: "{{ s != [] }}"
+                              then:
+                                - service: scene.turn_on
+                                  target:
+                                    entity_id: "{{ s }}"
+
+      # ------------------ INGEN RÖRELSE ---------------------
+      - conditions: "{{ trig == 'motion_off' }}"
+        sequence:
+          # Zonsläckning per zon
+          - repeat:
+              for_each:
+                - {m: "{{ zone1_m }}", l: "{{ zone1_l }}", d: "{{ zone1_d }}", f: "{{ zone1_f }}"}
+                - {m: "{{ zone2_m }}", l: "{{ zone2_l }}", d: "{{ zone2_d }}", f: "{{ zone2_f }}"}
+                - {m: "{{ zone3_m }}", l: "{{ zone3_l }}", d: "{{ zone3_d }}", f: "{{ zone3_f }}"}
+                - {m: "{{ zone4_m }}", l: "{{ zone4_l }}", d: "{{ zone4_d }}", f: "{{ zone4_f }}"}
+                - {m: "{{ zone5_m }}", l: "{{ zone5_l }}", d: "{{ zone5_d }}", f: "{{ zone5_f }}"}
+              sequence:
+                - variables:
+                    m: "{{ repeat.item.m }}"
+                    l: "{{ repeat.item.l }}"
+                    d: "{{ repeat.item.d | int }}"
+                    f: "{{ repeat.item.f | int }}"
+                - if:
+                    - condition: template
+                      value_template: "{{ m != [] }}"
+                  then:
+                    - delay:
+                        seconds: "{{ d }}"
+                    - variables:
+                        still_active: >
+                          {% set states_list = expand(m) | map(attribute='state') | list %}
+                          {{ 'on' in states_list }}
+                    - if:
+                        - condition: template
+                          value_template: "{{ not still_active }}"
+                      then:
+                        - service: light.turn_off
+                          target:
+                            entity_id: "{{ l }}"
+                          data:
+                            transition: "{{ f }}"
+
+          # Våningssläckning efter global inaktivitet
+          - delay:
+              seconds: "{{ floor_delay | int }}"
+          - variables:
+              all_motion_states: >
+                {% set all = expand(zone1_m) + expand(zone2_m) + expand(zone3_m) + expand(zone4_m) + expand(zone5_m) %}
+                {{ all | map(attribute='state') | list }}
+              floor_is_inactive: "{{ 'on' not in all_motion_states }}"
+          - if:
+              - condition: template
+                value_template: "{{ floor_is_inactive }}"
+            then:
+              - choose:
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ floor_off_scene_var != [] }}"
+                    sequence:
+                      - service: scene.turn_on
+                        target:
+                          entity_id: "{{ floor_off_scene_var }}"
+                  - default:
+                      - service: light.turn_off
+                        target:
+                          entity_id:
+                            - "{{ zone1_l }}"
+                            - "{{ zone2_l }}"
+                            - "{{ zone3_l }}"
+                            - "{{ zone4_l }}"
+                            - "{{ zone5_l }}"
+                        data:
+                          transition: 5
