@@ -1,0 +1,448 @@
+blueprint:
+  name: Ljuskontroll per rum — Slots med binära sensorer
+  description: >
+    Speglar mönstret: närvaro → välj slot baserat på binär sensor →
+    aktivera scen eller tänd ljus. Frånvaro → släck eller gör inget
+    baserat på valfria villkor. Varje slot och villkor konfigureras
+    med valfri sensor + state.
+  domain: automation
+  source_url: https://github.com/danielholm/ha-blueprints/blob/main/script/area_occupancy_lights.yaml
+
+  input:
+
+    # ════════════════════════════════════════════════════
+    # MÅL — vad ska styras?
+    # ════════════════════════════════════════════════════
+    light_target:
+      name: Ljusmål
+      description: >
+        Lampor, area eller floor att styra.
+        Används vid "tänd/släck ljus"-actions.
+      selector:
+        target:
+          entity:
+            domain: light
+
+    # ════════════════════════════════════════════════════
+    # NÄRVARO-TRIGGER
+    # ════════════════════════════════════════════════════
+    presence_sensors:
+      name: Närvaro-sensorer
+      description: >
+        Binära sensorer för närvaro i rummet/ytan.
+        Minst en 'on' = belagd.
+      selector:
+        entity:
+          domain: binary_sensor
+          multiple: true
+
+    # ════════════════════════════════════════════════════
+    # GLOBALA VILLKOR FÖR TÄNDNING
+    # Båda måste stämma för att något slot ska aktiveras.
+    # Lämna sensor tom för att hoppa över villkoret.
+    # ════════════════════════════════════════════════════
+    global_condition_1_sensor:
+      name: "Globalt villkor 1 — sensor (valfritt)"
+      description: >
+        T.ex. input_boolean.gaster. Lämna tom för att
+        hoppa över.
+      default: ""
+      selector:
+        entity: {}
+
+    global_condition_1_state:
+      name: "Globalt villkor 1 — förväntat state"
+      default: "off"
+      selector:
+        text:
+
+    global_condition_2_sensor:
+      name: "Globalt villkor 2 — sensor (valfritt)"
+      description: >
+        T.ex. binary_sensor.alla_sover.
+      default: ""
+      selector:
+        entity: {}
+
+    global_condition_2_state:
+      name: "Globalt villkor 2 — förväntat state"
+      default: "off"
+      selector:
+        text:
+
+    # ════════════════════════════════════════════════════
+    # SLOT: MORGON
+    # Kontrolleras först. Typiskt input_boolean.morgon=on.
+    # ════════════════════════════════════════════════════
+    morning_sensor:
+      name: "Morgon — sensor"
+      description: "Är detta slot aktivt när sensorn har rätt state."
+      default: input_boolean.morgon
+      selector:
+        entity: {}
+
+    morning_sensor_state:
+      name: "Morgon — state"
+      default: "on"
+      selector:
+        text:
+
+    morning_action:
+      name: "Morgon — action"
+      default: scene
+      selector:
+        select:
+          options:
+            - label: Aktivera scen
+              value: scene
+            - label: Tänd lampor (light_target)
+              value: light
+
+    morning_scene:
+      name: "Morgon — scen (om action=scen)"
+      default: ""
+      selector:
+        entity:
+          domain: scene
+
+    # ════════════════════════════════════════════════════
+    # SLOT: DAG
+    # ════════════════════════════════════════════════════
+    day_sensor:
+      name: "Dag — sensor"
+      default: ""
+      selector:
+        entity: {}
+
+    day_sensor_state:
+      name: "Dag — state"
+      default: "on"
+      selector:
+        text:
+
+    day_action:
+      name: "Dag — action"
+      default: light
+      selector:
+        select:
+          options:
+            - label: Aktivera scen
+              value: scene
+            - label: Tänd lampor (light_target)
+              value: light
+
+    day_scene:
+      name: "Dag — scen (om action=scen)"
+      default: ""
+      selector:
+        entity:
+          domain: scene
+
+    # ════════════════════════════════════════════════════
+    # SLOT: KVÄLL
+    # ════════════════════════════════════════════════════
+    evening_sensor:
+      name: "Kväll — sensor"
+      default: ""
+      selector:
+        entity: {}
+
+    evening_sensor_state:
+      name: "Kväll — state"
+      default: "on"
+      selector:
+        text:
+
+    evening_action:
+      name: "Kväll — action"
+      default: light
+      selector:
+        select:
+          options:
+            - label: Aktivera scen
+              value: scene
+            - label: Tänd lampor (light_target)
+              value: light
+
+    evening_scene:
+      name: "Kväll — scen (om action=scen)"
+      default: ""
+      selector:
+        entity:
+          domain: scene
+
+    # ════════════════════════════════════════════════════
+    # SLOT: NATT
+    # ════════════════════════════════════════════════════
+    night_sensor:
+      name: "Natt — sensor"
+      default: ""
+      selector:
+        entity: {}
+
+    night_sensor_state:
+      name: "Natt — state"
+      default: "on"
+      selector:
+        text:
+
+    night_action:
+      name: "Natt — action"
+      default: scene
+      selector:
+        select:
+          options:
+            - label: Aktivera scen
+              value: scene
+            - label: Tänd lampor (light_target)
+              value: light
+            - label: Gör inget (passivt nattläge)
+              value: none
+
+    night_scene:
+      name: "Natt — scen (om action=scen)"
+      default: ""
+      selector:
+        entity:
+          domain: scene
+
+    # ════════════════════════════════════════════════════
+    # FRÅNVARO — villkor för att SLÄCKA
+    # Om off_sensor matchar: släck efter delay.
+    # Om inte: gör inget (passivt).
+    # Lämna tom för att alltid släcka.
+    # ════════════════════════════════════════════════════
+    off_condition_sensor:
+      name: "Släckningsvillkor — sensor (valfritt)"
+      description: >
+        T.ex. binary_sensor.bara_daniel_hemma.
+        Lampan släcks bara om sensorn har rätt state.
+        Lämna tom för att alltid släcka.
+      default: ""
+      selector:
+        entity: {}
+
+    off_condition_state:
+      name: "Släckningsvillkor — state"
+      default: "on"
+      selector:
+        text:
+
+    off_delay:
+      name: "Fördröjning släckning (s)"
+      default: 120
+      selector:
+        number:
+          min: 0
+          max: 3600
+          unit_of_measurement: s
+          mode: slider
+
+    # Extra off-villkor 2 (om du behöver ytterligare ett)
+    off_condition_2_sensor:
+      name: "Släckningsvillkor 2 — sensor (valfritt)"
+      default: ""
+      selector:
+        entity: {}
+
+    off_condition_2_state:
+      name: "Släckningsvillkor 2 — state"
+      default: "on"
+      selector:
+        text:
+
+mode: restart
+max_exceeded: silent
+
+variables:
+  presence_sensors:            !input presence_sensors
+  global_condition_1_sensor:   !input global_condition_1_sensor
+  global_condition_1_state:    !input global_condition_1_state
+  global_condition_2_sensor:   !input global_condition_2_sensor
+  global_condition_2_state:    !input global_condition_2_state
+  morning_sensor:              !input morning_sensor
+  morning_sensor_state:        !input morning_sensor_state
+  morning_action:              !input morning_action
+  morning_scene:               !input morning_scene
+  day_sensor:                  !input day_sensor
+  day_sensor_state:            !input day_sensor_state
+  day_action:                  !input day_action
+  day_scene:                   !input day_scene
+  evening_sensor:              !input evening_sensor
+  evening_sensor_state:        !input evening_sensor_state
+  evening_action:              !input evening_action
+  evening_scene:               !input evening_scene
+  night_sensor:                !input night_sensor
+  night_sensor_state:          !input night_sensor_state
+  night_action:                !input night_action
+  night_scene:                 !input night_scene
+  off_condition_sensor:        !input off_condition_sensor
+  off_condition_state:         !input off_condition_state
+  off_condition_2_sensor:      !input off_condition_2_sensor
+  off_condition_2_state:       !input off_condition_2_state
+
+triggers:
+  - platform: state
+    entity_id: !input presence_sensors
+    to: "on"
+    id: occupied
+
+  - platform: state
+    entity_id: !input presence_sensors
+    to: "off"
+    id: unoccupied
+
+action:
+  - choose:
+
+      # ══════════════════════════════════════════════════
+      # BELAGD — välj slot i prioritetsordning
+      # ══════════════════════════════════════════════════
+      - conditions:
+          - condition: trigger
+            id: occupied
+          # Globalt villkor 1
+          - condition: template
+            value_template: >
+              {{ global_condition_1_sensor == ''
+                 or states(global_condition_1_sensor) == global_condition_1_state }}
+          # Globalt villkor 2
+          - condition: template
+            value_template: >
+              {{ global_condition_2_sensor == ''
+                 or states(global_condition_2_sensor) == global_condition_2_state }}
+        sequence:
+          - choose:
+
+              # ── MORGON ───────────────────────────────
+              - conditions:
+                  - condition: template
+                    value_template: >
+                      {{ morning_sensor != ''
+                         and states(morning_sensor) == morning_sensor_state }}
+                sequence:
+                  - choose:
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ morning_action == 'scene' and morning_scene != '' }}"
+                        sequence:
+                          - action: scene.turn_on
+                            target:
+                              entity_id: !input morning_scene
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ morning_action == 'light' }}"
+                        sequence:
+                          - action: light.turn_on
+                            target: !input light_target
+
+              # ── DAG ──────────────────────────────────
+              - conditions:
+                  - condition: template
+                    value_template: >
+                      {{ day_sensor != ''
+                         and states(day_sensor) == day_sensor_state }}
+                sequence:
+                  - choose:
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ day_action == 'scene' and day_scene != '' }}"
+                        sequence:
+                          - action: scene.turn_on
+                            target:
+                              entity_id: !input day_scene
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ day_action == 'light' }}"
+                        sequence:
+                          - action: light.turn_on
+                            target: !input light_target
+
+              # ── KVÄLL ────────────────────────────────
+              - conditions:
+                  - condition: template
+                    value_template: >
+                      {{ evening_sensor != ''
+                         and states(evening_sensor) == evening_sensor_state }}
+                sequence:
+                  - choose:
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ evening_action == 'scene' and evening_scene != '' }}"
+                        sequence:
+                          - action: scene.turn_on
+                            target:
+                              entity_id: !input evening_scene
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ evening_action == 'light' }}"
+                        sequence:
+                          - action: light.turn_on
+                            target: !input light_target
+
+              # ── NATT ─────────────────────────────────
+              - conditions:
+                  - condition: template
+                    value_template: >
+                      {{ night_sensor != ''
+                         and states(night_sensor) == night_sensor_state }}
+                sequence:
+                  - choose:
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ night_action == 'scene' and night_scene != '' }}"
+                        sequence:
+                          - action: scene.turn_on
+                            target:
+                              entity_id: !input night_scene
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ night_action == 'light' }}"
+                        sequence:
+                          - action: light.turn_on
+                            target: !input light_target
+                      # night_action == 'none': gör inget
+
+      # ══════════════════════════════════════════════════
+      # INTE BELAGD — släck eller gör inget
+      # ══════════════════════════════════════════════════
+      - conditions:
+          - condition: trigger
+            id: unoccupied
+        sequence:
+          - choose:
+
+              # ── Släck om villkor matchar ──────────────
+              - conditions:
+                  - condition: template
+                    value_template: >
+                      {{ (off_condition_sensor == ''
+                          or states(off_condition_sensor) == off_condition_state)
+                         and
+                         (off_condition_2_sensor == ''
+                          or states(off_condition_2_sensor) == off_condition_2_state) }}
+                sequence:
+                  - delay:
+                      seconds: !input off_delay
+                  # Dubbelkolla att rummet fortfarande är tomt
+                  - condition: template
+                    value_template: >
+                      {{ expand(presence_sensors)
+                         | selectattr('state', 'eq', 'on')
+                         | list | count == 0 }}
+                  # Dubbelkolla villkor (kan ha ändrats under delay)
+                  - condition: template
+                    value_template: >
+                      {{ (off_condition_sensor == ''
+                          or states(off_condition_sensor) == off_condition_state)
+                         and
+                         (off_condition_2_sensor == ''
+                          or states(off_condition_2_sensor) == off_condition_2_state) }}
+                  - action: light.turn_off
+                    target: !input light_target
+
+              # ── Annars: gör inget (passivt) ──────────
+              - conditions:
+                  - condition: template
+                    value_template: "{{ true }}"
+                sequence: []
