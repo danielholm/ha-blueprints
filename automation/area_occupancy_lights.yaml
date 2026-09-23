@@ -6,7 +6,7 @@ blueprint:
     baserat på valfria villkor. Varje slot och villkor konfigureras
     med valfri sensor + state.
   domain: automation
-  source_url: https://github.com/danielholm/ha-blueprints/blob/main/script/area_occupancy_lights.yaml
+  source_url: https://github.com/danielholm/ha-blueprints/blob/main/automation/area_occupancy_lights.yaml
 
   input:
 
