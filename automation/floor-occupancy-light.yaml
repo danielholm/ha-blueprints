@@ -5,7 +5,7 @@ blueprint:
     lampor, natt-scen och Adaptive Lighting-stöd. Ljuset tänds vid rörelse och släcks mjukt
     när rörelsen upphör. När hela våningen varit inaktiv en stund körs en scen eller all
     belysning släcks.
-  source_url: https://github.com/danielholm/ha-blueprints/blob/main/script/floor-occupancy-light.yaml
+  source_url: https://github.com/danielholm/ha-blueprints/blob/main/automation/floor-occupancy-light.yaml
   domain: automation
   input:
     floor_name:
